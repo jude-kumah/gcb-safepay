@@ -144,14 +144,14 @@ const A={
   step(()=>{S.role='seller';A.proof(c.id,'photo');S.csel=c.id;R();toast('Now resolve the cases in the Bank console')})}
 };
 function phone(){
- const b=S.role=='buyer';$('#who').textContent=b?'Kwame Boateng':"Ama's Thrift";
+ const b=S.role=='buyer';$('#who').textContent=b?'Jude Kumah':"Enyonam's Boutique";
  $('#pills').innerHTML=`<button class="${b?'on':''}" onclick="A.role('buyer')">Buyer</button><button class="${b?'':'on'}" onclick="A.role('seller')">Seller</button>`;
  $('#nav').innerHTML=[['home','Home'],['orders','Orders'],...(b?[['new','New payment']]:[])].map(x=>`<button class="${S.view==x[0]?'on':''}" onclick="A.go('${x[0]}')">${x[1]}</button>`).join('');
  const w=b?S.wallet.b:S.wallet.s,L=S.orders,h=o=>`<button class="ord" onclick="A.go('detail','${o.id}')"><span><b>${o.item}</b><br><span class="mut">${o.id}</span></span><span style="text-align:right"><b>${g(o.amt)}</b><br><span class="chip ${o.st}">${ST[o.st]}</span></span></button>`;
  let x='';
  if(S.view=='home')x=`<div class="wal"><span>${b?'Wallet balance':'Earnings wallet'}</span><b>${g(w)}</b><span>${b?'Pay safely: the seller is paid only after delivery is proven':'Paid out the moment delivery is proven'}</span></div>`+(b?`<button class="btn n" style="width:100%;margin-bottom:12px" onclick="A.go('new')">Start a SafePay payment</button>`:`<div class="note">Fee: 1.5% per completed sale, taken from the payout.</div>`)+`<h2 style="font-size:13px">Recent orders</h2>`+(L.slice(0,4).map(h).join('')||'<p class="mut">No orders yet. '+(b?'Start a payment to see escrow in action.':'Orders appear when a buyer pays.')+'</p>');
  else if(S.view=='orders')x=L.map(h).join('')||'<p class="mut">No orders yet.</p>';
- else if(S.view=='new')x=`<label class="fld">What are you buying?<input id="fi" value="Nike Air Max 90"></label><label class="fld">Amount (GHS)<input id="fa" type="number" min="1" value="850"></label><label class="fld">How will it be delivered?<select id="fm">${Object.entries(M).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label><div class="note">Your money goes into a box GCB holds shut. The seller gets it only when delivery is proven.</div><button class="btn n" style="width:100%" onclick="A.pay()">Pay into escrow</button>`;
+ else if(S.view=='new')x=`<label class="fld">What are you buying?<input id="fi" value="Nike Air Max 90"></label><label class="fld">Amount (GHS)<input id="fa" type="number" min="1" value="850"></label><label class="fld">How will it be delivered?<select id="fm">${Object.entries(M).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label><div class="note">Your money goes into a box GCB holds shut. The seller gets it only when delivery is proven.</div><button class="btn n" style="width:100%" onclick="A.pay()">Pay</button>`;
  else{const o=gt(S.sel);if(!o)x='';else{
   const i={escrow:0,sent:1,disputed:1,released:3,refunded:3}[o.st];
   x=`<button class="btn l" onclick="A.go('orders')">Back</button><h2 style="margin:10px 0 2px">${o.item}</h2><div class="mut">${o.id} · ${M[o.method]}</div><h2 style="margin:6px 0">${g(o.amt)} <span class="chip ${o.st}">${ST[o.st]}</span></h2>
