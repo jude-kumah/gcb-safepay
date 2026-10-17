@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GCB SafePay: working prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0B2A5B;--navy2:#2F5DA8;--gold:#F2B705;--bg:#EAF0F8;--card:#fff;--ink:#14213D;--mut:#5F6B85;--ok:#12805C;--bad:#C23B3B;--line:#DCE3EF;--soft:#F4F7FC;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--navy2:#6C93DB;--bg:#0A1426;--card:#122041;--ink:#E8EEFA;--mut:#93A0BD;--line:#22335A;--soft:#0E1A35;--ok:#3CC08F;--bad:#EF7777}}
+:root[data-theme="dark"]{--navy2:#6C93DB;--bg:#0A1426;--card:#122041;--ink:#E8EEFA;--mut:#93A0BD;--line:#22335A;--soft:#0E1A35;--ok:#3CC08F;--bad:#EF7777}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,system-ui,sans-serif;font-size:14px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.top{background:var(--navy);color:#fff;display:flex;align-items:center;gap:12px;padding:12px 20px;flex-wrap:wrap}
+.logo{background:var(--gold);color:var(--navy);font-weight:800;border-radius:8px;padding:4px 9px;letter-spacing:.5px}
+.top h1{font-size:16px;margin:0;font-weight:800}.top small{opacity:.75;display:block;font-weight:400}
+.live{width:8px;height:8px;border-radius:50%;background:#3CE0A0;display:inline-block;margin-right:6px;animation:pl 2s infinite}
+@keyframes pl{50%{opacity:.35}}
+.sp{flex:1}
+.btn{border:0;border-radius:10px;padding:9px 14px;font-weight:700;background:var(--gold);color:#0B2A5B}
+.btn.g{background:rgba(255,255,255,.14);color:#fff}
+.btn.o{background:var(--ok);color:#fff}.btn.r{background:var(--bad);color:#fff}.btn.n{background:var(--navy);color:#fff}
+.btn.l{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.tabs{display:none}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:20px;padding:20px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card h2{font-size:14px;margin:0 0 10px;font-weight:800}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kpi span{color:var(--mut);font-size:12px}.kpi b{display:block;font-size:22px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi.hero{background:var(--navy);color:#fff;border-color:var(--navy)}.kpi.hero span{color:#BFD0EE}.kpi.hero b{font-size:28px;color:var(--gold)}
+.kpi.up b{animation:fl 1.2s}@keyframes fl{0%{color:var(--ok);transform:scale(1.07)}100%{transform:none}}
+.g2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.row{display:flex;gap:10px;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:12.5px}th{text-align:left;color:var(--mut);font-weight:600;padding:4px 6px}td{padding:7px 6px;border-top:1px solid var(--line)}
+.scroll{overflow-x:auto;max-height:230px;overflow-y:auto}
+.chip{display:inline-block;border-radius:99px;padding:2px 9px;font-size:11.5px;font-weight:700;background:var(--soft);border:1px solid var(--line)}
+.chip.escrow{background:#FFF3C9;color:#6B4E00;border-color:#F2D77A}.chip.sent{background:#DCE9FF;color:#133A7A;border-color:#B5CEF5}
+.chip.disputed{background:#FBDADA;color:#8E2020;border-color:#EFB1B1}.chip.released{background:#D6F2E6;color:#0B5B40;border-color:#9ED9BF}.chip.refunded{background:#E6E9F0;color:#434B5E}
+.case{cursor:pointer;padding:9px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--soft)}
+.case.on{border-color:var(--navy2);box-shadow:0 0 0 2px var(--navy2) inset}
+.bar{height:8px;border-radius:5px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--navy2)}
+.mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.note{background:var(--soft);border-left:4px solid var(--gold);padding:8px 10px;border-radius:6px;margin:8px 0;font-size:12.5px}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px}
+/* phone */
+.phone{position:sticky;top:12px;width:360px;height:720px;margin:0 auto;background:#0b1220;border-radius:40px;padding:10px;box-shadow:0 20px 50px rgba(5,15,40,.35)}
+.scr{background:var(--bg);border-radius:30px;height:100%;display:flex;flex-direction:column;overflow:hidden}
+.ph{background:var(--navy);color:#fff;padding:12px 16px 12px}
+.ph .sb{display:flex;justify-content:space-between;font-size:11px;opacity:.8;margin-bottom:6px}
+.pills{display:flex;background:rgba(255,255,255,.12);border-radius:99px;padding:3px;margin-top:8px}
+.pills button{flex:1;border:0;border-radius:99px;padding:6px;background:none;color:#fff;font-weight:700;font-size:12.5px}.pills .on{background:var(--gold);color:var(--navy)}
+.pb{flex:1;overflow-y:auto;padding:14px}
+.nav{display:flex;border-top:1px solid var(--line);background:var(--card)}
+.nav button{flex:1;border:0;background:none;padding:11px 4px;font-size:12px;font-weight:700;color:var(--mut)}.nav .on{color:var(--navy2);box-shadow:0 -3px 0 var(--navy2) inset}
+.wal{background:var(--navy);color:#fff;border-radius:16px;padding:16px;margin-bottom:12px}.wal b{display:block;font-size:26px;font-weight:800}.wal span{opacity:.75;font-size:12px}
+.fld{display:block;margin-bottom:10px;font-size:12px;color:var(--mut);font-weight:600}
+.fld input,.fld select{display:block;width:100%;margin-top:4px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.ord{display:flex;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:8px;cursor:pointer;width:100%;text-align:left}
+.pin{font-size:34px;font-weight:800;letter-spacing:10px;text-align:center;background:var(--card);border:2px dashed var(--gold);border-radius:12px;padding:12px;margin:10px 0}
+.tl{list-style:none;margin:10px 0;padding:0}.tl li{padding:0 0 10px 22px;position:relative;color:var(--mut)}
+.tl li:before{content:"";position:absolute;left:0;top:4px;width:10px;height:10px;border-radius:50%;background:var(--line)}.tl li.d{color:var(--ink);font-weight:700}.tl li.d:before{background:var(--ok)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:99px;font-weight:700;z-index:9;display:none;max-width:90vw}
+@media (max-width:1020px){.wrap{grid-template-columns:1fr}.g2,.g3{grid-template-columns:1fr}}
+@media (max-width:760px){
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--line)}.tabs button{flex:1;border:0;background:none;padding:12px;font-weight:800;color:var(--mut)}.tabs .on{color:var(--navy2);box-shadow:0 -3px 0 var(--navy2) inset}
+.wrap{padding:12px}body[data-v="phone"] #dash,body[data-v="dash"] #phonecol{display:none}
+.phone{position:static;width:100%;height:calc(100dvh - 130px);min-height:520px;padding:0;border-radius:18px;background:none;box-shadow:none}.scr{border-radius:18px;border:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head>
+<body data-v="phone">
+<header class="top">
+ <span class="logo">GCB</span>
+ <div><h1>SafePay</h1><small>Escrow for online and social-media sales</small></div>
+ <span class="sp"></span>
+ <button class="btn" onclick="A.demo()">Play demo</button>
+ <button class="btn g" onclick="A.ff()">Fast-forward 72h</button>
+ <button class="btn g" onclick="A.reset()">Reset</button>
+</header>
+<div class="tabs"><button id="t1" class="on" onclick="V('phone')">Customer app</button><button id="t2" onclick="V('dash')">Bank console</button></div>
+<div class="wrap">
+ <main id="dash"></main>
+ <aside id="phonecol"><div class="phone"><div class="scr"><div class="ph"><div class="sb"><span>9:41</span><span>GCB Mobile</span></div><b id="who"></b><div class="pills" id="pills"></div></div><div class="pb" id="pb"></div><nav class="nav" id="nav"></nav></div></div></aside>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),FEE=.015;
+const g=n=>'GHS '+n.toLocaleString('en-GH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const now=()=>new Date().toLocaleTimeString('en-GH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+const SEED=[1180,1320,1260,1410,1290,1520,1480,1350,1610,1570,1440,1690,1730,1660];
+let S,prev={};
+function init(){S={role:'buyer',view:'home',sel:null,csel:null,n:1042,orders:[],ledger:[],feed:[],wallet:{b:5000,s:480},res:0,flags:[{u:'Buyer 0244-xx-1190',w:'4 non-receipt claims in 30 days',r:'High'},{u:'Seller "QuickMart GH"',w:'3 lost disputes this month',r:'Medium'}],
+ base:{gmv:1284500,tx:3912,rev:19267.5,esc:86400,res:118,mix:[2390,1210,312]}}}
+init();
+const M={courier:'Registered courier (iCOLMS-GH)',self:'Self-delivery, code (PIN)',photo:'No rider, no code (photo)'};
+const T={courier:['Strongest','Rider ID + delivery confirmation'],self:['Strong','Delivery PIN'],photo:['Weakest','Timestamped photo']};
+const ST={escrow:'In escrow',sent:'On its way',disputed:'Dispute open',released:'Released',refunded:'Refunded'};
+const gt=id=>S.orders.find(o=>o.id===id);
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t.k);t.k=setTimeout(()=>t.style.display='none',2200)}
+function V(v){document.body.dataset.v=v;$('#t1').className=v=='phone'?'on':'';$('#t2').className=v=='dash'?'on':''}
+function post(dr,cr,amt,ref){S.ledger.unshift({t:now(),dr,cr,amt,ref})}
+function ev(m){S.feed.unshift({t:now(),m})}
+function release(o,why){o.st='released';const net=+(o.amt-o.fee).toFixed(2);S.wallet.s+=net;
+ post('SafePay escrow GL 2410','Seller wallet',net,o.id);post('SafePay escrow GL 2410','GCB fee income GL 4120',o.fee,o.id);ev(o.id+' released to seller ('+why+'). Fee '+g(o.fee))}
+function refund(o){o.st='refunded';S.wallet.b+=o.amt;post('SafePay escrow GL 2410','Buyer wallet',o.amt,o.id);ev(o.id+' refunded to buyer')}
+function create(item,amt,method){amt=+amt;if(!item||!(amt>0)){toast('Enter an item and an amount');return}
+ if(amt>S.wallet.b){toast('Not enough wallet balance');return}
+ const o={id:'SP-'+(++S.n),item,amt,fee:+(amt*FEE).toFixed(2),method,st:'escrow',pin:null,rider:null,photo:null,d:null};
+ S.orders.unshift(o);S.wallet.b-=amt;post('Buyer wallet','SafePay escrow GL 2410',amt,o.id);ev(o.id+' paid, '+g(amt)+' locked in escrow');S.sel=o.id;S.view='detail';return o}
+const A={
+ role(r){S.role=r;S.view='home';R()},go(v,id){S.view=v;S.sel=id||null;R()},
+ pay(){const o=create($('#fi').value.trim(),$('#fa').value,$('#fm').value);R();if(o)toast('Paid. Money is locked in escrow')},
+ send(id,q){const o=gt(id);if(o.method=='courier')o.rider=($('#rid')&&$('#rid').value)||'ICOLMS-GH-20471';
+  else if(o.method=='self')o.pin=String(1000+Math.floor(Math.random()*9000));else o.photo=now();
+  o.st='sent';ev(o.id+' marked as sent ('+T[o.method][1]+')');if(!q)R()},
+ pin(id,v){const o=gt(id),c=v||($('#pi')&&$('#pi').value);if(c===o.pin){release(o,'PIN confirmed');R();toast('Code accepted. Payment released')}else toast('Wrong code. Ask the buyer again')},
+ rider(id){const o=gt(id);release(o,'rider '+o.rider+' confirmed drop-off');R()},
+ confirm(id){release(gt(id),'buyer confirmed');R()},
+ report(id){const o=gt(id);o.st='disputed';o.d={st:'wait',proof:null,at:now(),reason:'Item never arrived'};
+  ev(o.id+' dispute raised, funds locked');if(!S.flags[2])S.flags.push({u:'Buyer Kwame Boateng',w:'Raised 1 non-receipt claim today',r:'Low'});R();toast('Dispute raised. Funds are locked')},
+ proof(id,t){const o=gt(id);o.d.proof=t;o.d.st=t=='rider'?'fast':'review';ev(o.id+' seller submitted '+(t=='rider'?'rider confirmation':'photo evidence'));R();toast('Proof sent')},
+ csel(id){S.csel=id;R()},
+ res(id,dec){const o=gt(id);dec=='release'?release(o,'dispute resolved for seller'):refund(o);o.d.st='done';o.d.out=dec;o.d.rt=+(1.2+Math.random()*2).toFixed(1);S.res++;ev(o.id+' dispute closed by GCB officer');R();toast('Decision recorded and posted to the ledger')},
+ ff(){let n=0;S.orders.forEach(o=>{if(o.st=='sent'&&(o.rider||o.photo)){release(o,'buyer silent past deadline, delivery proof on file');n++}
+  else if(o.st=='disputed'&&o.d.st=='wait'){o.d.st='esc';ev(o.id+' seller silent 48h, escalated');n++}});R();toast(n?n+' case(s) moved by the 72h rules':'Nothing waiting on a deadline')},
+ reset(){init();R();toast('Prototype reset')},
+ demo(){init();R();const sl=(f,t)=>setTimeout(f,t);let a,b,c,t=300;const step=f=>{sl(f,t);t+=1300};
+  step(()=>{S.role='buyer';a=create('Nike Air Max 90',850,'self');R()});
+  step(()=>{S.role='seller';A.send(a.id)});
+  step(()=>{S.role='buyer';R()});
+  step(()=>{S.role='seller';A.pin(a.id,a.pin)});
+  step(()=>{S.role='buyer';b=create('Samsung A15 phone',1200,'courier');R()});
+  step(()=>{S.role='seller';A.send(b.id)});
+  step(()=>{S.role='buyer';A.report(b.id)});
+  step(()=>{S.role='seller';S.sel=b.id;A.proof(b.id,'rider')});
+  step(()=>{S.role='buyer';c=create('Handmade kente stole',400,'photo');R()});
+  step(()=>{S.role='seller';A.send(c.id)});
+  step(()=>{S.role='buyer';A.report(c.id)});
+  step(()=>{S.role='seller';A.proof(c.id,'photo');S.csel=c.id;R();toast('Now resolve the cases in the Bank console')})}
+};
+function phone(){
+ const b=S.role=='buyer';$('#who').textContent=b?'Kwame Boateng':"Ama's Thrift";
+ $('#pills').innerHTML=`<button class="${b?'on':''}" onclick="A.role('buyer')">Buyer</button><button class="${b?'':'on'}" onclick="A.role('seller')">Seller</button>`;
+ $('#nav').innerHTML=[['home','Home'],['orders','Orders'],...(b?[['new','New payment']]:[])].map(x=>`<button class="${S.view==x[0]?'on':''}" onclick="A.go('${x[0]}')">${x[1]}</button>`).join('');
+ const w=b?S.wallet.b:S.wallet.s,L=S.orders,h=o=>`<button class="ord" onclick="A.go('detail','${o.id}')"><span><b>${o.item}</b><br><span class="mut">${o.id}</span></span><span style="text-align:right"><b>${g(o.amt)}</b><br><span class="chip ${o.st}">${ST[o.st]}</span></span></button>`;
+ let x='';
+ if(S.view=='home')x=`<div class="wal"><span>${b?'Wallet balance':'Earnings wallet'}</span><b>${g(w)}</b><span>${b?'Pay safely: the seller is paid only after delivery is proven':'Paid out the moment delivery is proven'}</span></div>`+(b?`<button class="btn n" style="width:100%;margin-bottom:12px" onclick="A.go('new')">Start a SafePay payment</button>`:`<div class="note">Fee: 1.5% per completed sale, taken from the payout.</div>`)+`<h2 style="font-size:13px">Recent orders</h2>`+(L.slice(0,4).map(h).join('')||'<p class="mut">No orders yet. '+(b?'Start a payment to see escrow in action.':'Orders appear when a buyer pays.')+'</p>');
+ else if(S.view=='orders')x=L.map(h).join('')||'<p class="mut">No orders yet.</p>';
+ else if(S.view=='new')x=`<label class="fld">What are you buying?<input id="fi" value="Nike Air Max 90"></label><label class="fld">Amount (GHS)<input id="fa" type="number" min="1" value="850"></label><label class="fld">How will it be delivered?<select id="fm">${Object.entries(M).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></label><div class="note">Your money goes into a box GCB holds shut. The seller gets it only when delivery is proven.</div><button class="btn n" style="width:100%" onclick="A.pay()">Pay into escrow</button>`;
+ else{const o=gt(S.sel);if(!o)x='';else{
+  const i={escrow:0,sent:1,disputed:1,released:3,refunded:3}[o.st];
+  x=`<button class="btn l" onclick="A.go('orders')">Back</button><h2 style="margin:10px 0 2px">${o.item}</h2><div class="mut">${o.id} · ${M[o.method]}</div><h2 style="margin:6px 0">${g(o.amt)} <span class="chip ${o.st}">${ST[o.st]}</span></h2>
+  <ul class="tl">${['Paid into escrow','Seller sent the item','Delivery proven','Funds settled'].map((s,k)=>`<li class="${k<=i?'d':''}">${s}</li>`).join('')}</ul>`+act(o,b)}}
+ $('#pb').innerHTML=x}
+function act(o,b){let x='';const d=o.d;
+ if(o.st=='escrow')x=b?'<div class="note">Waiting for the seller to send your item.</div>':(o.method=='courier'?'<label class="fld">Rider registration ID<input id="rid" value="ICOLMS-GH-20471"></label>':'')+`<button class="btn n" style="width:100%" onclick="A.send('${o.id}')">${o.method=='photo'?'Take handoff photo and mark sent':'Mark as sent'}</button>`;
+ else if(o.st=='sent'){
+  if(b)x=(o.method=='self'?`<div class="note">Give this code to the seller only when the item is in your hands.</div><div class="pin">${o.pin}</div>`:o.method=='courier'?`<div class="note">Rider <b>${o.rider}</b> is delivering. Verified through iCOLMS-GH.</div>`:`<div class="note">Seller logged a handoff photo at ${o.photo}.</div>`)+(o.method=='photo'?`<button class="btn o" style="width:100%;margin-bottom:8px" onclick="A.confirm('${o.id}')">I received it</button>`:'')+`<button class="btn r" style="width:100%" onclick="A.report('${o.id}')">Item has not arrived</button>`;
+  else x=o.method=='self'?`<label class="fld">Code from the buyer<input id="pi" inputmode="numeric" maxlength="4" placeholder="4-digit code"></label><button class="btn n" style="width:100%" onclick="A.pin('${o.id}')">Confirm delivery</button>`:o.method=='courier'?`<div class="note">Rider ${o.rider} has the parcel.</div><button class="btn l" style="width:100%" onclick="A.rider('${o.id}')">Demo: rider confirms drop-off</button>`:`<div class="note">Photo logged. If the buyer stays silent past the deadline, funds release automatically.</div>`;}
+ else if(o.st=='disputed'){
+  x=`<div class="note"><b>Funds are locked.</b> ${{wait:b?'The seller has 48 hours to respond.':'Send your proof within 48 hours.',fast:'Strong evidence received. GCB is finalising a fast decision.',review:'A GCB officer is reviewing both sides.',esc:'Escalated under SafePay rules.'}[d.st]}</div>`;
+  if(!b&&d.st=='wait')x+=(o.method=='courier'?`<button class="btn n" style="width:100%;margin-bottom:8px" onclick="A.proof('${o.id}','rider')">Send rider confirmation</button>`:'')+`<button class="btn l" style="width:100%" onclick="A.proof('${o.id}','photo')">Upload photo evidence</button>`}
+ else x=`<div class="note">${o.st=='released'?(b?'Seller has been paid. Thank you for using SafePay.':'You received '+g(o.amt-o.fee)+' after the '+g(o.fee)+' fee.'):'Your '+g(o.amt)+' was returned to your wallet.'}</div>`;
+ return x}
+function dash(){
+ const L=S.orders,B=S.base,rel=L.filter(o=>o.st=='released'),open=L.filter(o=>o.d&&o.d.st!='done'),done=L.filter(o=>o.d&&o.d.st=='done');
+ const gmv=B.gmv+L.reduce((s,o)=>s+o.amt,0),tx=B.tx+L.length,rev=B.rev+rel.reduce((s,o)=>s+o.fee,0),esc=B.esc+L.filter(o=>['escrow','sent','disputed'].includes(o.st)).reduce((s,o)=>s+o.amt,0);
+ const rt=done.length?(done.reduce((s,o)=>s+o.d.rt,0)/done.length).toFixed(1):'3.1';
+ const K=[['rev','SafePay revenue (fees)',g(rev),'hero'],['esc','Held in escrow',g(esc)],['gmv','Payment volume',g(gmv)],['tx','Transactions',tx.toLocaleString()],['op','Open disputes',open.length],['rt','Avg. resolution',rt+' h']];
+ const k=K.map(([id,l,v,c])=>{const u=prev[id]!==undefined&&prev[id]!==v;prev[id]=v;return `<div class="kpi ${c||''} ${u?'up':''}"><span>${l}</span><b>${v}</b></div>`}).join('');
+ const days=[...SEED,840+rel.reduce((s,o)=>s+o.fee,0)],m=Math.max(...days)*1.15;
+ const svg=`<svg viewBox="0 0 330 120" width="100%" role="img" aria-label="Daily fee revenue, last 15 days">${days.map((v,i)=>`<rect x="${i*22}" y="${110-v/m*105}" width="17" height="${v/m*105}" rx="3" fill="${i==days.length-1?'var(--gold)':'var(--navy2)'}"/>`).join('')}</svg>`;
+ const mix=B.mix.map((v,i)=>v+L.filter(o=>o.method==['courier','self','photo'][i]).length),mt=mix.reduce((a,b)=>a+b);
+ const mixh=[['Strongest: verified rider',0],['Strong: delivery PIN',1],['Weakest: photo, human review',2]].map(([l,i])=>`<div style="margin-bottom:9px"><div class="row"><span>${l}</span><span class="sp"></span><b>${Math.round(mix[i]/mt*100)}%</b></div><div class="bar"><i style="width:${mix[i]/mt*100}%"></i></div></div>`).join('');
+ const cs=L.filter(o=>o.d),c=gt(S.csel)||cs.find(o=>o.d.st!='done')||cs[0];
+ const q=cs.map(o=>`<div class="case ${c&&c.id==o.id?'on':''}" onclick="A.csel('${o.id}')"><div class="row"><b>${o.id}</b><span class="sp"></span><span class="chip ${o.d.st=='done'?'released':'disputed'}">${{wait:'Waiting on seller',fast:'Strong evidence',review:'Needs review',esc:'Escalated',done:'Resolved'}[o.d.st]}</span></div><span class="mut">${o.item} · ${g(o.amt)}</span></div>`).join('')||'<p class="mut">No disputes. When a buyer reports a problem, the case lands here and the funds lock.</p>';
+ let cp='';if(c){const d=c.d,tier=d.proof=='rider'?T.courier:d.proof=='photo'?T.photo:null,can=['fast','review','esc'].includes(d.st);
+  const rule={wait:'Funds locked. Seller has 48 h to submit proof. Use "Fast-forward 72h" to simulate silence.',fast:'Rule: strong evidence, verified rider confirmation. Recommended: release to seller.',review:'Rule: weak evidence (photo only). A human decides; no automatic outcome.',esc:'Rule: seller did not respond in 48 h. Escalated for resolution under SafePay rules.',done:'Closed. Decision: '+(d.out=='release'?'released to seller':'refunded to buyer')+'.'}[d.st];
+  cp=`<h2>Case ${c.id}</h2><table><tr><td class="mut">Buyer claim</td><td>${d.reason} (raised ${d.at})</td></tr><tr><td class="mut">Delivery method</td><td>${M[c.method]}</td></tr><tr><td class="mut">Seller proof</td><td>${tier?`<b>${tier[0]}</b>: ${tier[1]}${d.proof=='rider'?' · '+c.rider:''}`:'None yet'}</td></tr><tr><td class="mut">Amount in escrow</td><td>${g(c.amt)}</td></tr></table><div class="note">${rule}</div>
+  <div class="row" style="flex-wrap:wrap"><button class="btn o" ${can?'':'disabled'} onclick="A.res('${c.id}','release')">Release to seller</button><button class="btn r" ${can?'':'disabled'} onclick="A.res('${c.id}','refund')">Refund buyer</button></div><p class="mut" style="font-size:12px">Unresolved after GCB's process? The customer can escalate to Bank of Ghana under the Consumer Recourse Mechanism Guideline.</p>`}
+ else cp='<h2>Case detail</h2><p class="mut">Select a case to see evidence and decide.</p>';
+ const tr=L.slice(0,6).map(o=>`<tr><td>${o.id}</td><td>${o.item}</td><td>${g(o.amt)}</td><td><span class="chip ${o.st}">${ST[o.st]}</span></td></tr>`).join('')||'<tr><td colspan="4" class="mut">Waiting for the first payment from the customer app.</td></tr>';
+ const lg=S.ledger.slice(0,6).map(e=>`<tr><td class="mono">${e.t}</td><td class="mono">DR ${e.dr}<br>CR ${e.cr}</td><td>${g(e.amt)}</td></tr>`).join('')||'<tr><td colspan="3" class="mut">No postings yet.</td></tr>';
+ const fl=S.flags.map(f=>`<tr><td>${f.u}<br><span class="mut">${f.w}</span></td><td><span class="chip">${f.r}</span></td></tr>`).join('');
+ $('#dash').innerHTML=`<div class="row" style="margin-bottom:12px"><h2 style="margin:0;font-size:18px">Operations console</h2><span class="sp"></span><span class="mut"><i class="live"></i>Live · Disputes officer: Efua Mensah</span></div><div class="kpis">${k}</div>
+ <div class="g2"><div class="card"><h2>Fee revenue per day (today in gold)</h2>${svg}<p class="mut" style="margin:6px 0 0">Today: ${g(840+rel.reduce((s,o)=>s+o.fee,0))} · ${B.res+S.res} disputes resolved to date</p></div><div class="card"><h2>Proof strength mix</h2>${mixh}</div></div>
+ <div class="g3"><div class="card"><h2>Dispute queue</h2>${q}</div><div class="card">${cp}</div></div>
+ <div class="g3"><div class="card"><h2>Live transactions</h2><div class="scroll"><table><tr><th>ID</th><th>Item</th><th>Amount</th><th>Status</th></tr>${tr}</table></div></div><div class="card"><h2>Core banking postings (sandbox API)</h2><div class="scroll"><table><tr><th>Time</th><th>Entry</th><th>Amount</th></tr>${lg}</table></div></div></div>
+ <div class="g3"><div class="card"><h2>Abuse watch</h2><table>${fl}</table></div><div class="card"><h2>Activity log</h2><div class="scroll mono">${S.feed.slice(0,8).map(f=>`<div>${f.t} · ${f.m}</div>`).join('')||'<span class="mut">No activity yet.</span>'}</div></div></div>`}
+function R(){phone();dash()}
+R();
+</script></body></html>
